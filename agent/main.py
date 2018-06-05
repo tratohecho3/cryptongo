@@ -17,7 +17,7 @@ def get_cryptocurrencies_from_api():
 def save_ticker(db_connection, ticker_data=None):
     if not ticker_data:
         return False
-    if check_if_exists():
+    if check_if_exists(db_connection,ticker_data):
         return False
     ticker_hash = get_ticker_hash(ticker_data)
     ticker_data['ticker_hash'] = ticker_hash
@@ -48,3 +48,11 @@ def get_ticker_hash(ticker_data):
         ticker_value += str(value)
 
     return get_hash(ticker_value)
+
+if __name__ == "__main__":
+    connection = get_db_connection('mongodb://localhost:27017/')
+    tickers = get_cryptocurrencies_from_api()
+
+    for ticker in tickers:
+        save_ticker(connection,ticker)
+    print("Tickers almacenado")
