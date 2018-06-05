@@ -1,5 +1,5 @@
 import pymongo 
-from flask import Flask, jsonify, request 
+from flask import Flask, jsonify, request
 
 def get_db_connection(uri):
 	client = pymongo.MongoClient(uri) 
@@ -8,21 +8,20 @@ def get_db_connection(uri):
 app = Flask(__name__) 
 db_connection = get_db_connection('mongodb://localhost:27017/') 
 
-
 def get_documents():
 	params = {} 
 	name = request.args.get('name', '') 
 	limit = int(request.args.get('limit', 0)) 
 
 	if name: 
-		params.update({'name', name}) 
-
+		params.update({'name': name}) 
 	cursor = db_connection.tickers.find( 
 		params, 
 		{'_id': 0, 'ticker_hash': 0} 
 	).limit(limit)
 
 	return list(cursor) 
+
 
 def get_top20():
 	params = {} 
@@ -41,19 +40,17 @@ def get_top20():
 
 	return list(cursor) 
 
-
 def remove_currency():
 	params = {} 
 	name = request.args.get('name', '') 
-
-	if name: 
-		params.update({'name', name}) 
+	if name:
+		params.update({'name': name}) 
 	else:
-		returnFalse
+		return False
 
 	return db_connection.tickers.delete_many( 
 		params
-	).delete_count() 
+	).deleted_count 
 
 @app.route("/") 
 def index():
@@ -66,3 +63,20 @@ def index():
 @app.route("/top20", methods=['GET']) 
 def top20():
 	return jsonify(get_top20()) 
+
+@app.route("/tickers", methods=['GET', 'DELETE']) 
+def tickers():
+	if request.method == "GET": 
+		return jsonify(get_documents())
+	elif request.method == "DELETE": 
+		result = remove_currency() 
+		if result > 0:
+
+			return jsonify({
+				'text': 'Documentos eliminados'
+			}), 204
+		else:
+
+			return jsonify({
+				'error': 'No se encontraron documentos'
+			}), 404
